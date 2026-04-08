@@ -1,19 +1,36 @@
+import Home from './pages/Home'
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
-      
-      <h1 className="text-4xl font-bold mb-4">
-       <b> Alerta  Licitaciones Chile </b>
-      </h1>
+    <div className="min-h-screen bg-gray-900 text-white">
 
-      <p className="text-gray-400 mb-6">
-        Sistema de alertas de licitaciones en tiempo real
-      </p>
+      <header className="border-b border-gray-800 px-4 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
 
-      <button className="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg transition">
-        Ver Licitaciones
-      </button>
+          {/* Logo / título */}
+          <div>
+            <h1 className="text-lg font-bold text-white">
+              Sistema de alertas de licitaciones en tiempo real
+            </h1>
+            <p className="text-gray-500 text-xs">
+              Monitor de licitaciones públicas de Chile
+            </p>
+          </div>
+
+          {/* Badge "En vivo" */}
+          <div className="flex items-center gap-2 text-xs text-green-400">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            En vivo
+          </div>
+
+        </div>
+      </header>
+
+      {/* Contenido principal */}
+      <main>
+        <Home />
+      </main>
 
     </div>
-  );
+  )
 }
