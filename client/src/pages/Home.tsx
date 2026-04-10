@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react'
 import { getLicitaciones }     from '../services/api'
 import LicitacionCard          from '../components/LicitacionCard'
+import SearchBar               from '../components/SearchBar'
 import type { LicitacionBasica }    from '../types/licitacion.types'
+interface Filtros {
+  estado:          string
+  fecha:           string
+  CodigoOrganismo: string
+}
+ 
+const FILTROS_INICIALES: Filtros = {
+  estado:          '',
+  fecha:           '',
+  CodigoOrganismo: '',
+}
 
 export default function Home() {
 
@@ -17,16 +29,23 @@ export default function Home() {
   // Estado de error — guarda el mensaje si algo falla
   const [error, setError]                 = useState<string | null>(null)
 
+  const [filtros, setFiltros]           = useState<Filtros>(FILTROS_INICIALES)
+
   useEffect(() => {
-    cargarLicitaciones()
+    cargarLicitaciones(FILTROS_INICIALES) /* con esto recibimos el filtro */
   }, []) // [] = solo al montar, no en cada render
 
-  async function cargarLicitaciones() {
+  async function cargarLicitaciones(filtrosActivos: Filtros) {
     try {
       setCargando(true)
       setError(null)
 
-      const data = await getLicitaciones()
+      const params: Record<string, string> = {}
+      if (filtrosActivos.estado) params.estado = filtrosActivos.estado
+      if (filtrosActivos.fecha) params.fecha = filtrosActivos.fecha
+      if (filtrosActivos.CodigoOrganismo) params.CodigoOrganismo = filtrosActivos.CodigoOrganismo
+
+      const data = await getLicitaciones(Object.keys(params).length > 0 ? params : undefined)
       console.log('Licitaciones recibidas del backend:', data)
 
       setLicitaciones(data.licitaciones.slice(0, 50)) // solo 50 para no colapsar el frontend
@@ -40,6 +59,16 @@ export default function Home() {
       setCargando(false)
     }
   }
+  function handleFiltrar(nuevosFiltros: Filtros) {
+    setFiltros(nuevosFiltros)
+    cargarLicitaciones(nuevosFiltros)
+  }
+
+  function handleLimpiar() {
+    setFiltros(FILTROS_INICIALES)
+    cargarLicitaciones(FILTROS_INICIALES)
+  }
+
   /* Renderizado para el estado */
   if (cargando) {
     return (
@@ -67,7 +96,12 @@ export default function Home() {
   /* render cargado con datos */
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-
+      <SearchBar
+        filtros={filtros}
+        onFiltrar={handleFiltrar}
+        onLimpiar={handleLimpiar}
+        cargando={cargando}
+      />
       {/* Header con contador */}
       <div className="flex items-center justify-between mb-6">
         <div>
