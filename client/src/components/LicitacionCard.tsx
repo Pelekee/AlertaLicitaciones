@@ -1,6 +1,7 @@
 //muestra solo lo que trae la API directamente.
 import type { LicitacionBasica } from '../types/licitacion.types'
 import { ESTADO_TEXTO, TIPO_TEXTO } from '../types/licitacion.types'
+import { useNavigate } from 'react-router-dom'
 interface Props {
   licitacion: LicitacionBasica
 }
@@ -41,6 +42,7 @@ function colorEstado(codigo: number): string {
 }
 
 export default function LicitacionCard({ licitacion }: Props) {
+  const navigate = useNavigate()
   const {
     CodigoExterno,
     Nombre,
@@ -54,7 +56,9 @@ export default function LicitacionCard({ licitacion }: Props) {
   } = licitacion
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-gray-500 transition-colors">
+    <div 
+    onClick={() => navigate(`/detalle/${CodigoExterno}`)}
+    className="bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-gray-500 transition-colors">
 
       {/* Fila superior: código + estado + tipo */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -85,7 +89,7 @@ export default function LicitacionCard({ licitacion }: Props) {
       {/* Organismo comprador */}
       {Comprador && (
         <p className="text-gray-400 text-xs mb-3 flex items-center gap-1">
-          <span>🏛️</span>
+          <span>Organismo</span>
           <span>{Comprador.NombreOrganismo}</span>
           {Comprador.RegionUnidad && (
             <span className="text-gray-500">· {Comprador.RegionUnidad}</span>

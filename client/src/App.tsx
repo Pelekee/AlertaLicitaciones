@@ -1,4 +1,6 @@
+import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
+import Detalle from './pages/Detalle'
 
 export default function App() {
   return (
@@ -28,7 +30,10 @@ export default function App() {
 
       {/* Contenido principal */}
       <main>
-        <Home />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/detalle/:codigo" element={<Detalle />} />
+        </Routes>
       </main>
 
     </div>

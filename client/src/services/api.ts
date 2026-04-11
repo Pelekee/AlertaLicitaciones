@@ -1,6 +1,6 @@
 /* Flujo: React → api.ts → localhost:3000 → ChileCompra */
 import axios from 'axios'
-import type { RespuestaLicitaciones } from '../types/licitacion.types'
+import type { RespuestaLicitaciones, RespuestaDetalle } from '../types/licitacion.types'
  
 // URL base de nuestro backend
 // En desarrollo apunta a localhost:3000
@@ -17,5 +17,12 @@ export async function getLicitaciones(filtros?: {
     { params: filtros }
   )
  
+  return respuesta.data
+}
+
+export async function getLicitacionDetalle(codigo: string): Promise<RespuestaDetalle> {
+  const respuesta = await axios.get<RespuestaDetalle>(
+    `${BASE_URL}/licitaciones/${codigo}`
+  )
   return respuesta.data
 }

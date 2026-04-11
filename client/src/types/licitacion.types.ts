@@ -46,3 +46,38 @@ export interface RespuestaLicitaciones {
   fechaConsulta: string
   licitaciones:  LicitacionBasica[]
 }
+
+export interface LicitacionDetalle extends LicitacionBasica {
+  Descripcion?: string
+  Estado?:         string
+  SubContratacion?:    number
+  TiempoDuracionContrato?: number
+  EsRenovable?:         number
+  NombreResponsableContrato?: string
+  EmailResponsableContrato?: string
+  FonoResponsableContrato?: string
+  Fechas?: {
+    FechaCreacion: string
+    FechaPublicacion: string
+    FechaAdjudicacion?: string
+    FechaEstimadaAdjudicacion?: string
+    FechaActoAperturaTecnica?: string
+    FechaActoAperturaEconomica?: string
+  }
+  Items?: {
+    Cantidad: number
+    Listado: ItemLicitacion []
+  }
+}
+  export interface ItemLicitacion {
+    Correlativo?: number
+    NombreProducto?: string
+    Descripcion?: string
+    Categoria?: string
+    UnidadMedida?: string
+    Cantidad?: number
+}
+  export interface RespuestaDetalle {
+    ok: boolean
+    licitacion: LicitacionDetalle
+  }
