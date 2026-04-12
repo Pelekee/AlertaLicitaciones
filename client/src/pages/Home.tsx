@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react' // ← actualizado: + useRef
 import { getLicitaciones }     from '../services/api'
 import LicitacionCard          from '../components/LicitacionCard'
 import SearchBar               from '../components/SearchBar'
@@ -15,6 +15,8 @@ const FILTROS_INICIALES: Filtros = {
   CodigoOrganismo: '',
 }
 
+const POLLING_INTERVAL = 5 * 60 * 1000 // ← nuevo: 5 minutos en ms
+
 export default function Home() {
 
   // Estado para el listado de licitaciones
@@ -29,11 +31,21 @@ export default function Home() {
   // Estado de error — guarda el mensaje si algo falla
   const [error, setError]                 = useState<string | null>(null)
 
-  const [filtros, setFiltros]           = useState<Filtros>(FILTROS_INICIALES)
+  const [filtros, setFiltros]             = useState<Filtros>(FILTROS_INICIALES)
+  const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null) // ← nuevo
+  const filtrosRef = useRef<Filtros>(FILTROS_INICIALES) 
 
   useEffect(() => {
     cargarLicitaciones(FILTROS_INICIALES) /* con esto recibimos el filtro */
   }, []) // [] = solo al montar, no en cada render
+
+  // polling automatico cada 5 minutos
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      cargarLicitaciones(filtrosRef.current)
+    }, POLLING_INTERVAL)
+    return () => clearInterval(intervalo) // limpiar al desmontar
+  }, [])
 
   async function cargarLicitaciones(filtrosActivos: Filtros) {
     try {
@@ -50,8 +62,9 @@ export default function Home() {
 
       setLicitaciones(data.licitaciones.slice(0, 50)) // solo 50 para no colapsar el frontend
       setCantidad(data.cantidad)
+      setUltimaActualizacion(new Date())
 
-    } catch (err) { 
+    } catch (err) {
       console.error('Error al cargar licitaciones:', err)
       setError('No se pudieron cargar las licitaciones. Verifica que el servidor esté corriendo.')
     } finally {
@@ -60,11 +73,13 @@ export default function Home() {
     }
   }
   function handleFiltrar(nuevosFiltros: Filtros) {
+    filtrosRef.current = nuevosFiltros // actualiza la referencia para el polling
     setFiltros(nuevosFiltros)
     cargarLicitaciones(nuevosFiltros)
   }
 
   function handleLimpiar() {
+    filtrosRef.current = FILTROS_INICIALES //
     setFiltros(FILTROS_INICIALES)
     cargarLicitaciones(FILTROS_INICIALES)
   }
@@ -85,7 +100,7 @@ export default function Home() {
         <p className="text-4xl">⚠️</p>
         <p className="text-red-400 text-sm text-center max-w-md">{error}</p>
         <button
-          onClick={cargarLicitaciones}
+          onClick={() => cargarLicitaciones(filtros)} // ← actualizado: fix tipo incorrecto
           className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-lg transition"
         >
           Reintentar
@@ -112,13 +127,20 @@ export default function Home() {
             {cantidad.toLocaleString('es-CL')} licitaciones encontradas hoy
           </p>
         </div>
-        <button
-          onClick={cargarLicitaciones}
-          className="text-sm text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded-lg transition flex items-center gap-2"
-        >
-          <span>↻</span>
-          <span>Recargar</span>
-        </button>
+        <div className="flex flex-col items-end gap-1"> {/* ← nuevo: agrupa botón + timestamp */}
+          <button
+            onClick={() => cargarLicitaciones(filtros)} 
+            className="text-sm text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded-lg transition flex items-center gap-2"
+          >
+            <span>↻</span>
+            <span>Recargar</span>
+          </button>
+          {ultimaActualizacion && ( // muestra hora de última actualización
+            <p className="text-xs text-gray-600">
+              Actualizado: {ultimaActualizacion.toLocaleTimeString('es-CL')} · Auto cada 5 min
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Grid de tarjetas */}
