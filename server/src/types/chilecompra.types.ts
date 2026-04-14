@@ -289,3 +289,16 @@ export interface FiltrosOrdenCompra {
   CodigoOrganismo?: string
   CodigoProveedor?: string
 }
+
+// Resultado del algoritmo de score de oportunidad  // ← nuevo
+export interface ScoreResult {
+  puntaje: number
+  nivel:   'Alta' | 'Media' | 'Baja'
+  color:   'green' | 'yellow' | 'red'
+  factores: {
+    diasRestantes: number
+    monto:         number
+    estado:        number
+    tipo:          number
+  }
+}

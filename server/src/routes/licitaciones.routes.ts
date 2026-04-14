@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express'
 import { getLicitaciones, getLicitacionPorCodigo } from '../services/chilecompra.service'
 import { FiltrosLicitacion } from '../types/chilecompra.types'
+import { calcularScore }     from '../services/score.service'
+import { calcularScoreLista } from '../services/scorepyme.service'  // ← nuevo
 
 const router = Router()
 
@@ -12,9 +14,12 @@ const router = Router()
 //   ?estado=activas
 //   ?CodigoOrganismo=6945
 //   ?CodigoProveedor=17793
+//   ?modo=pyme          ← nuevo: usa algoritmo PYME y ordena por score
 router.get('/', async (req: Request, res: Response) => {
 
   try {
+    const modo = req.query.modo as string | undefined  // ← nuevo
+
     const filtros: FiltrosLicitacion = {
       fecha:           req.query.fecha           as string | undefined,
       estado:          req.query.estado          as string | undefined,
@@ -26,15 +31,23 @@ router.get('/', async (req: Request, res: Response) => {
       Object.entries(filtros).filter(([_, v]) => v !== undefined)
     ) as FiltrosLicitacion
 
-    console.log('Consultando licitaciones con filtros:', filtrosLimpios)
+    console.log('Consultando licitaciones con filtros:', filtrosLimpios, '| modo:', modo ?? 'general')
 
     const resultado = await getLicitaciones(filtrosLimpios)
+
+    // ← actualizado: elegir algoritmo según modo
+    const licitacionesConScore = modo === 'pyme'
+      ? calcularScoreLista(resultado.Listado)        // PYME: ordena de mayor a menor score
+      : resultado.Listado.map(lic => ({
+          ...lic,
+          score: calcularScore(lic)
+        }))
 
     res.json({
       ok: true,
       cantidad: resultado.Cantidad,
       fechaConsulta: resultado.FechaCreacion,
-      licitaciones: resultado.Listado
+      licitaciones: licitacionesConScore
     })
 
   } catch (error) {
