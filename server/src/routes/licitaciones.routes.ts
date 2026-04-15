@@ -82,7 +82,10 @@ router.get('/:codigo', async (req: Request, res: Response) => {
 
     res.json({
       ok: true,
-      licitacion
+      licitacion: {
+        ...licitacion,
+        score: calcularScore(licitacion)
+      }
     })
 
   } catch (error) {

@@ -2,7 +2,7 @@ import { useEffect, useState }       from 'react'
 import { useParams, useNavigate }    from 'react-router-dom'
 import { getLicitacionDetalle }      from '../services/api'
 import { ESTADO_TEXTO, TIPO_TEXTO }  from '../types/licitacion.types'
-import type { LicitacionDetalle }    from '../types/licitacion.types'
+import type { LicitacionDetalle, ScoreOportunidad } from '../types/licitacion.types'
 
 function formatearFecha(fechaISO?: string): string {
   if (!fechaISO) return '—'
@@ -21,6 +21,30 @@ function formatearMonto(monto?: number, moneda?: string): string {
     currency: 'CLP',
     maximumFractionDigits: 0,
   })
+}
+
+// barra de progreso para cada factor del score
+function BarraFactor({
+  label, pts, maxPts, color
+}: {
+  label: string
+  pts:   number
+  maxPts: number
+  color: ScoreOportunidad['color']
+}) {
+  const pct = Math.round((pts / maxPts) * 100)
+  const barColor = color === 'green' ? 'bg-green-500' : color === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span className="text-gray-400">{label}</span>
+        <span className="text-gray-300 font-medium">{pts} / {maxPts} pts</span>
+      </div>
+      <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
 }
 
 export default function Detalle() {
@@ -107,6 +131,30 @@ export default function Detalle() {
           <p className="text-gray-400 text-sm leading-relaxed">{licitacion.Descripcion}</p>
         )}
       </div>
+
+      {/* Panel de Score de Oportunidad */}  {/* ← nuevo */}
+      {licitacion.score && (() => {
+        const { puntaje, nivel, color, factores } = licitacion.score!
+        const textoColor = color === 'green' ? 'text-green-400' : color === 'yellow' ? 'text-yellow-400' : 'text-red-400'
+        return (
+          <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-4">
+            <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-4">
+              Score de oportunidad
+            </h3>
+            <div className="flex items-baseline gap-2 mb-5">
+              <span className="text-4xl font-bold text-white">{puntaje}</span>
+              <span className="text-gray-500 text-sm">/ 100</span>
+              <span className={`text-sm font-semibold ml-1 ${textoColor}`}>{nivel}</span>
+            </div>
+            <div className="flex flex-col gap-3">
+              <BarraFactor label="Días restantes"  pts={factores.diasRestantes} maxPts={30} color={color} />
+              <BarraFactor label="Monto estimado"  pts={factores.monto}         maxPts={25} color={color} />
+              <BarraFactor label="Estado"          pts={factores.estado}        maxPts={25} color={color} />
+              <BarraFactor label="Tipo licitación" pts={factores.tipo}          maxPts={20} color={color} />
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 

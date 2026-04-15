@@ -1,5 +1,4 @@
-//muestra solo lo que trae la API directamente.
-import type { LicitacionBasica } from '../types/licitacion.types'
+import type { LicitacionBasica, ScoreOportunidad } from '../types/licitacion.types'
 import { ESTADO_TEXTO, TIPO_TEXTO } from '../types/licitacion.types'
 import { useNavigate } from 'react-router-dom'
 interface Props {
@@ -29,6 +28,15 @@ function formatearMonto(monto: number, moneda?: string): string {
   })
 }
 
+// clases Tailwind según color del score
+function colorScore(color: ScoreOportunidad['color']): string {
+  switch (color) {
+    case 'green':  return 'bg-green-500/20 text-green-400 border border-green-500/30'
+    case 'yellow': return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+    case 'red':    return 'bg-red-500/20 text-red-400 border border-red-500/30'
+  }
+}
+
 function colorEstado(codigo: number): string {
   switch (codigo) {
     case 5:  return 'bg-green-500/20 text-green-400 border border-green-500/30'
@@ -53,6 +61,7 @@ export default function LicitacionCard({ licitacion }: Props) {
     Moneda,
     DiasCierreLicitacion,
     Comprador,
+    score,
   } = licitacion
 
   return (
@@ -77,6 +86,13 @@ export default function LicitacionCard({ licitacion }: Props) {
         {Tipo && (
           <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
             {Tipo} — {TIPO_TEXTO[Tipo] ?? Tipo}
+          </span>
+        )}
+
+        {/* Badge de score de oportunidad */}
+        {score && (
+          <span className={`ml-auto text-xs font-bold px-2 py-1 rounded-lg ${colorScore(score.color)}`}>
+            {score.puntaje} · {score.nivel}
           </span>
         )}
       </div>
