@@ -10,6 +10,7 @@ export async function getLicitaciones(filtros?: {
   fecha?:           string
   estado?:          string
   CodigoOrganismo?: string
+  modo?:            string  // 'pyme' | '' sin valor = modo empresa grande
 }): Promise<RespuestaLicitaciones> {
  
   const respuesta = await axios.get<RespuestaLicitaciones>(

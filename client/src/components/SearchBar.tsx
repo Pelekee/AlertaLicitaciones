@@ -2,6 +2,7 @@ interface Filtros {
   estado:          string
   fecha:           string
   CodigoOrganismo: string
+  modo:            string  // ← nuevo: '' = general | 'pyme' = PYME
 }
 
 interface Props {
@@ -37,6 +38,35 @@ export default function SearchBar({ filtros, onFiltrar, onLimpiar, cargando }: P
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6">
+
+      {/* Toggle de modo: Empresa General / PYME */}  {/* ← nuevo */}
+      <div className="flex items-center gap-3 mb-4">
+        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+          Perfil de búsqueda
+        </p>
+        <div className="flex rounded-lg border border-gray-600 overflow-hidden">
+          <button
+            onClick={() => handleChange('modo', '')}
+            className={`px-3 py-1.5 text-xs font-medium transition ${
+              filtros.modo === ''
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-400 hover:text-white'
+            }`}
+          >
+            Empresa Grande
+          </button>
+          <button
+            onClick={() => handleChange('modo', 'pyme')}
+            className={`px-3 py-1.5 text-xs font-medium transition border-l border-gray-600 ${
+              filtros.modo === 'pyme'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-700 text-gray-400 hover:text-white'
+            }`}
+          >
+            PYME
+          </button>
+        </div>
+      </div>
 
       <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">
         Filtros de búsqueda

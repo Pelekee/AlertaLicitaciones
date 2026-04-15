@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react' // ← actualizado: + useRef
+import { useEffect, useState, useRef } from 'react' 
 import { getLicitaciones }     from '../services/api'
 import LicitacionCard          from '../components/LicitacionCard'
 import SearchBar               from '../components/SearchBar'
@@ -7,15 +7,17 @@ interface Filtros {
   estado:          string
   fecha:           string
   CodigoOrganismo: string
+  modo:            string  // '' = Empresa Grande | 'Pyme'
 }
- 
+
 const FILTROS_INICIALES: Filtros = {
   estado:          '',
   fecha:           '',
   CodigoOrganismo: '',
+  modo:            '',     
 }
 
-const POLLING_INTERVAL = 5 * 60 * 1000 // ← nuevo: 5 minutos en ms
+const POLLING_INTERVAL = 5 * 60 * 1000 // 5 minutos en milisegundos
 
 export default function Home() {
 
@@ -53,9 +55,10 @@ export default function Home() {
       setError(null)
 
       const params: Record<string, string> = {}
-      if (filtrosActivos.estado) params.estado = filtrosActivos.estado
-      if (filtrosActivos.fecha) params.fecha = filtrosActivos.fecha
+      if (filtrosActivos.estado)          params.estado          = filtrosActivos.estado
+      if (filtrosActivos.fecha)           params.fecha           = filtrosActivos.fecha
       if (filtrosActivos.CodigoOrganismo) params.CodigoOrganismo = filtrosActivos.CodigoOrganismo
+      if (filtrosActivos.modo)            params.modo            = filtrosActivos.modo  
 
       const data = await getLicitaciones(Object.keys(params).length > 0 ? params : undefined)
       console.log('Licitaciones recibidas del backend:', data)
@@ -100,7 +103,7 @@ export default function Home() {
         <p className="text-4xl">⚠️</p>
         <p className="text-red-400 text-sm text-center max-w-md">{error}</p>
         <button
-          onClick={() => cargarLicitaciones(filtros)} // ← actualizado: fix tipo incorrecto
+          onClick={() => cargarLicitaciones(filtros)} 
           className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-lg transition"
         >
           Reintentar

@@ -21,6 +21,19 @@ export const TIPO_TEXTO: Record<string, string> = {
   LS: 'Servicios especializados',
 }
  
+// Score de oportunidad para cada licitación
+export interface ScoreOportunidad {
+  puntaje: number
+  nivel:   'Alta' | 'Media' | 'Baja'
+  color:   'green' | 'yellow' | 'red'   
+  factores: {                            
+    diasRestantes: number                // renombrado de diasCierre
+    monto:         number
+    estado:        number
+    tipo:          number
+  }
+}
+
 export interface LicitacionBasica {
   CodigoExterno:         string
   Nombre:                string
@@ -30,6 +43,7 @@ export interface LicitacionBasica {
   MontoEstimado?:        number
   Moneda?:               string
   DiasCierreLicitacion?: number
+  score?:                ScoreOportunidad
   Comprador?: {
     CodigoOrganismo: string
     NombreOrganismo: string
