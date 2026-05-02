@@ -27,3 +27,29 @@ export async function getLicitacionDetalle(codigo: string): Promise<RespuestaDet
   )
   return respuesta.data
 }
+
+// tipos y funciones de autenticación
+
+export interface RespuestaAuth {
+  ok:      boolean
+  token:   string
+  usuario: { id: string; email: string; nombre: string }
+}
+
+export async function authRegistrar(
+  email: string, password: string, nombre: string
+): Promise<RespuestaAuth> {
+  const respuesta = await axios.post<RespuestaAuth>(`${BASE_URL}/auth/register`, {
+    email, password, nombre
+  })
+  return respuesta.data
+}
+
+export async function authLogin(
+  email: string, password: string
+): Promise<RespuestaAuth> {
+  const respuesta = await axios.post<RespuestaAuth>(`${BASE_URL}/auth/login`, {
+    email, password
+  })
+  return respuesta.data
+}
