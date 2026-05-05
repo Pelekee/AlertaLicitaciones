@@ -1,15 +1,19 @@
+import { useState } from 'react'              
+import { guardarFiltro } from '../services/api'  
+
 interface Filtros {
   estado:          string
   fecha:           string
   CodigoOrganismo: string
-  modo:            string  // ← nuevo: '' = general | 'pyme' = PYME
+  modo:            string  // '' = general | 'pyme' = PYME
 }
 
 interface Props {
-  filtros:    Filtros
-  onFiltrar:  (filtros: Filtros) => void
-  onLimpiar:  () => void
-  cargando:   boolean
+  filtros:        Filtros
+  onFiltrar:      (filtros: Filtros) => void
+  onLimpiar:      () => void
+  cargando:       boolean
+  onFiltroGuardado?: () => void  //callback para refrescar la lista de guardados
 }
 
 // Opciones del select de estado
@@ -25,7 +29,11 @@ const ESTADOS = [
   { valor: 'todos',      etiqueta: 'Todos (sin filtro)' },
 ]
 
-export default function SearchBar({ filtros, onFiltrar, onLimpiar, cargando }: Props) {
+export default function SearchBar({ filtros, onFiltrar, onLimpiar, cargando, onFiltroGuardado }: Props) {
+
+  const [guardando, setGuardando] = useState(false)
+  const [mostrandoInputSave, setMostrandoInputSave] = useState(false)
+  const [nombreNuevoFiltro, setNombreNuevoFiltro] = useState('')
 
   // Cuando cambia cualquier campo, actualizamos solo ese campo
   // y mantenemos el resto igual usando el spread operator
@@ -33,123 +41,157 @@ export default function SearchBar({ filtros, onFiltrar, onLimpiar, cargando }: P
     onFiltrar({ ...filtros, [campo]: valor })
   }
 
+const handleGuardarFinal = async () => {
+    const nombre = nombreNuevoFiltro.trim()
+    if (!nombre) return
+    
+    try {
+      setGuardando(true)
+      await guardarFiltro({
+        nombre,
+        estado: filtros.estado || undefined,
+        fecha: filtros.fecha || undefined,
+        CodigoOrganismo: filtros.CodigoOrganismo || undefined,
+        modo: filtros.modo || undefined,
+      })
+      setMostrandoInputSave(false)
+      setNombreNuevoFiltro('')
+      onFiltroGuardado?.()
+    } catch {
+      alert('No se pudo guardar el filtro')
+    } finally {
+      setGuardando(false)
+    }
+  }
+
   // Verificamos si hay algún filtro activo para mostrar el botón limpiar
-  const hayFiltros = filtros.estado || filtros.fecha || filtros.CodigoOrganismo
+  const hayFiltros = filtros.estado || filtros.fecha || filtros.CodigoOrganismo || filtros.modo
 
-  return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6">
+return (
+    <div className="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-6 shadow-xl transition-all">
+      
+      {/* SECCIÓN SUPERIOR: Perfil y Guardado */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <span className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">Perfil</span>
+          <div className="flex p-1 bg-gray-900/50 rounded-xl border border-gray-700">
+            <button
+              onClick={() => handleChange('modo', '')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                filtros.modo === '' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              General
+            </button>
+            <button
+              onClick={() => handleChange('modo', 'pyme')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                filtros.modo === 'pyme' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              PYME
+            </button>
+          </div>
+        </div>
 
-      {/* Toggle de modo: Empresa General / PYME */}  {/* ← nuevo */}
-      <div className="flex items-center gap-3 mb-4">
-        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
-          Perfil de búsqueda
-        </p>
-        <div className="flex rounded-lg border border-gray-600 overflow-hidden">
-          <button
-            onClick={() => handleChange('modo', '')}
-            className={`px-3 py-1.5 text-xs font-medium transition ${
-              filtros.modo === ''
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:text-white'
-            }`}
-          >
-            Empresa Grande
-          </button>
-          <button
-            onClick={() => handleChange('modo', 'pyme')}
-            className={`px-3 py-1.5 text-xs font-medium transition border-l border-gray-600 ${
-              filtros.modo === 'pyme'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:text-white'
-            }`}
-          >
-            PYME
-          </button>
+        {/* Guardado Inteligente */}
+        <div className="flex items-center">
+          {mostrandoInputSave ? (
+            <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-200">
+              <input
+                autoFocus
+                placeholder="Nombre del filtro..."
+                className="bg-gray-900 border border-blue-500/50 text-white text-xs rounded-lg px-3 py-2 focus:ring-2 ring-blue-500/20 outline-none w-44"
+                value={nombreNuevoFiltro}
+                onChange={(e) => setNombreNuevoFiltro(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleGuardarFinal()}
+              />
+              <button 
+                onClick={handleGuardarFinal}
+                disabled={guardando || !nombreNuevoFiltro.trim()}
+                className="bg-blue-600 hover:bg-blue-500 text-white text-xs p-2 rounded-lg disabled:opacity-50"
+              >
+                {guardando ? '...' : '✓'}
+              </button>
+              <button onClick={() => setMostrandoInputSave(false)} className="text-gray-500 hover:text-red-400 p-1">✕</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setMostrandoInputSave(true)}
+              className="text-blue-400 hover:text-blue-300 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 transition-colors group"
+            >
+              <span className="bg-blue-500/10 group-hover:bg-blue-500/20 p-1 rounded-md">＋</span>
+              Guardar vista actual
+            </button>
+          )}
         </div>
       </div>
 
-      <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">
-        Filtros de búsqueda
-      </p>
-
-      <div className="flex flex-wrap gap-3">
-
-        {/* Filtro por Estado */}
-        <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
-          <label className="text-gray-500 text-xs">Estado</label>
+      {/* SECCIÓN INFERIOR: Inputs de Filtro */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        
+        {/* Estado */}
+        <div className="space-y-1.5">
+          <label className="text-gray-500 text-[10px] font-bold uppercase ml-1">Estado</label>
           <select
             value={filtros.estado}
             onChange={e => handleChange('estado', e.target.value)}
             disabled={cargando}
-            className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded-xl px-3 py-2.5 focus:border-blue-500 outline-none transition-all hover:bg-gray-850"
           >
             {ESTADOS.map(op => (
-              <option key={op.valor} value={op.valor}>
-                {op.etiqueta}
-              </option>
+              <option key={op.valor} value={op.valor}>{op.etiqueta}</option>
             ))}
           </select>
         </div>
 
-        {/* Filtro por Fecha */}
-        <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
-          <label className="text-gray-500 text-xs">
-            Fecha <span className="text-gray-600">(formato: ddmmaaaa)</span>
-          </label>
+        {/* Fecha */}
+        <div className="space-y-1.5">
+          <label className="text-gray-500 text-[10px] font-bold uppercase ml-1">Fecha Publicación</label>
           <input
             type="text"
-            placeholder="Ej: 06042026"
+            placeholder="DDMMAAAA"
             value={filtros.fecha}
             onChange={e => handleChange('fecha', e.target.value)}
             disabled={cargando}
             maxLength={8}
-            className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded-xl px-3 py-2.5 placeholder-gray-600 focus:border-blue-500 outline-none transition-all"
           />
         </div>
 
-        {/* Filtro por Código de Organismo */}
-        <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
-          <label className="text-gray-500 text-xs">
-            Código organismo <span className="text-gray-600">(ej: 6945)</span>
-          </label>
+        {/* Código Organismo */}
+        <div className="space-y-1.5">
+          <label className="text-gray-500 text-[10px] font-bold uppercase ml-1">Cód. Organismo</label>
           <input
             type="text"
             placeholder="Ej: 6945"
             value={filtros.CodigoOrganismo}
             onChange={e => handleChange('CodigoOrganismo', e.target.value)}
             disabled={cargando}
-            className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-sm rounded-xl px-3 py-2.5 placeholder-gray-600 focus:border-blue-500 outline-none transition-all"
           />
         </div>
 
-        {/* Botones de acción */}
-        <div className="flex flex-col gap-1 justify-end min-w-[120px]">
-          <label className="text-gray-500 text-xs opacity-0 select-none">Acciones</label>
-          <div className="flex gap-2">
+        {/* Acciones */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => onFiltrar(filtros)}
+            disabled={cargando}
+            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-bold py-2.5 rounded-xl transition-all shadow-lg active:scale-95"
+          >
+            {cargando ? 'Cargando...' : 'Aplicar'}
+          </button>
 
-            {/* Botón Buscar */}
+          {hayFiltros && (
             <button
-              onClick={() => onFiltrar(filtros)}
-              disabled={cargando}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+              onClick={onLimpiar}
+              className="px-4 py-2.5 text-gray-400 hover:text-white border border-gray-700 hover:border-red-500/50 hover:bg-red-500/10 rounded-xl transition-all"
+              title="Limpiar filtros"
             >
-              {cargando ? '...' : 'Buscar'}
+              ✕
             </button>
-
-            {/* Botón Limpiar — solo visible si hay filtros activos */}
-            {hayFiltros && (
-              <button
-                onClick={onLimpiar}
-                disabled={cargando}
-                className="text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 disabled:opacity-50 text-sm px-3 py-2 rounded-lg transition"
-                title="Limpiar filtros"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          )}
         </div>
-
       </div>
     </div>
   )

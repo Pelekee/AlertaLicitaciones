@@ -1,7 +1,9 @@
-import { useEffect, useState, useRef } from 'react' 
+import { useEffect, useState, useRef } from 'react'
 import { getLicitaciones }     from '../services/api'
 import LicitacionCard          from '../components/LicitacionCard'
 import SearchBar               from '../components/SearchBar'
+import FiltrosGuardados        from '../components/FiltrosGuardados'  
+import type { FiltroGuardado } from '../services/api'                 
 import type { LicitacionBasica }    from '../types/licitacion.types'
 interface Filtros {
   estado:          string
@@ -34,8 +36,9 @@ export default function Home() {
   const [error, setError]                 = useState<string | null>(null)
 
   const [filtros, setFiltros]             = useState<Filtros>(FILTROS_INICIALES)
-  const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null) // ← nuevo
-  const filtrosRef = useRef<Filtros>(FILTROS_INICIALES) 
+  const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null)
+  const [refrescarGuardados, setRefrescarGuardados] = useState(0) 
+  const filtrosRef = useRef<Filtros>(FILTROS_INICIALES)
 
   useEffect(() => {
     cargarLicitaciones(FILTROS_INICIALES) /* con esto recibimos el filtro */
@@ -87,6 +90,17 @@ export default function Home() {
     cargarLicitaciones(FILTROS_INICIALES)
   }
 
+  //aplica un filtro guardado (de la BD)
+  function handleCargarGuardado(f: FiltroGuardado) {
+    const nuevos: Filtros = {
+      estado:          f.estado          ?? '',
+      fecha:           f.fecha           ?? '',
+      CodigoOrganismo: f.CodigoOrganismo ?? '',
+      modo:            f.modo            ?? '',
+    }
+    handleFiltrar(nuevos)
+  }
+
   /* Renderizado para el estado */
   if (cargando) {
     return (
@@ -119,6 +133,13 @@ export default function Home() {
         onFiltrar={handleFiltrar}
         onLimpiar={handleLimpiar}
         cargando={cargando}
+        onFiltroGuardado={() => setRefrescarGuardados(n => n + 1)}
+      />
+
+      {/* Lista de filtros guardados del usuario */}
+      <FiltrosGuardados
+        onCargar={handleCargarGuardado}
+        refrescarToken={refrescarGuardados}
       />
       {/* Header con contador */}
       <div className="flex items-center justify-between mb-6">
