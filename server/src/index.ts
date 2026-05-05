@@ -3,7 +3,8 @@ import cors        from 'cors'
 import dotenv      from 'dotenv'
 
 import licitacionesRouter from './routes/licitaciones.routes'
-import authRouter         from './routes/auth.routes'  // ← nuevo
+import authRouter         from './routes/auth.routes'
+import filtrosRouter      from './routes/filtros.routes' 
 
 // Cargar variables de entorno
 dotenv.config()
@@ -19,7 +20,7 @@ const PORT = process.env.PORT || 3000
 app.use(cors({
   origin: 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],  // ← nuevo: permite header JWT
+  allowedHeaders: ['Content-Type', 'Authorization'],  // permite header JWT
 }))
 
 // express.json(): permite leer el body de peticiones POST como JSON
@@ -27,7 +28,8 @@ app.use(express.json())
 
 // Rutas
 app.use('/api/licitaciones', licitacionesRouter)
-app.use('/api/auth',         authRouter)  // ← nuevo
+app.use('/api/auth',         authRouter)
+app.use('/api/filtros',      filtrosRouter)  // (protegido con JWT)
 
 // verificar que esta funcionando y corriendo correctamente http://localhost:3000/api/prueba
 app.get('/api/prueba', (_req, res) => {

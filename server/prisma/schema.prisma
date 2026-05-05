@@ -8,9 +8,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String           @id @default(cuid())
+  email     String           @unique
   password  String
   nombre    String
-  creadoEn  DateTime @default(now())
+  creadoEn  DateTime         @default(now())
+  filtros   FiltroGuardado[]
+}
+
+model FiltroGuardado {
+  id              String   @id @default(cuid())
+  nombre          String
+  estado          String?
+  fecha           String?
+  CodigoOrganismo String?
+  modo            String?
+  creadoEn        DateTime @default(now())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
