@@ -55,24 +55,28 @@ export default function Detalle() {
   const [cargando, setCargando]     = useState<boolean>(true)
   const [error, setError]           = useState<string | null>(null)
 
+  // cancela la petición anterior si el usuario cambia de licitación rápido
   useEffect(() => {
     if (!codigo) return
-    cargarDetalle()
-  }, [codigo])
 
-  async function cargarDetalle() {
-    try {
-      setCargando(true)
-      setError(null)
-      const data = await getLicitacionDetalle(codigo!)
-      setLicitacion(data.licitacion)
-    } catch (err) {
-      console.error('Error al cargar detalle:', err)
-      setError('No se pudo cargar el detalle de esta licitación.')
-    } finally {
-      setCargando(false)
-    }
-  }
+    let cancelado = false
+
+    getLicitacionDetalle(codigo)
+      .then(data => {
+        if (cancelado) return
+        setCargando(false)
+        setLicitacion(data.licitacion)
+      })
+      .catch(err => {
+        if (cancelado) return
+        console.error('Error al cargar detalle:', err)
+        setError('No se pudo cargar el detalle. La API de ChileCompra está saturada, intenta nuevamente en unos segundos.')
+        setCargando(false)
+      })
+
+    // si el componente se desmonta o cambia el código, ignora la respuesta vieja
+    return () => { cancelado = true }
+  }, [codigo])
 
   // Estado de carga
   if (cargando) {
